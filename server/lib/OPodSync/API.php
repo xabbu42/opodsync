@@ -548,15 +548,28 @@ class API
 	public function episodes(): array
 	{
 		if ($this->method === 'GET') {
-			$since = isset($_GET['since']) ? (int)$_GET['since'] : 0;
+			$where = 'e.user = ?';
+			$params = [$this->user->id];
+			$group = ($_GET['aggregated'] ?? '') === 'true' ? ' GROUP BY e.url' : ' GROUP BY e.id';
+
+			if (isset($_GET['since'])) {
+				$where .= ' AND e.changed >= ?';
+				$params[] = (int)$_GET['since'];
+			}
+
+			// s.user too, so SQLite starts from the subscription_url index
+			if (isset($_GET['podcast'])) {
+				$where .= ' AND s.user = ? AND s.url = ?';
+				array_push($params, $this->user->id, $_GET['podcast']);
+			}
 
 			return [
 				'timestamp' => time(),
 				'actions' => $this->queryWithData('SELECT e.url AS episode, e.action, e.data, s.url AS podcast,
-					strftime(\'%Y-%m-%dT%H:%M:%SZ\', e.changed, \'unixepoch\') AS timestamp
+					strftime(\'%Y-%m-%dT%H:%M:%SZ\', MAX(e.changed), \'unixepoch\') AS timestamp
 					FROM episodes_actions e
 					INNER JOIN subscriptions s ON s.id = e.subscription
-					WHERE e.user = ? AND e.changed >= ?;', $this->user->id, $since)
+					WHERE ' . $where . $group . ';', ...$params)
 			];
 		}
 
