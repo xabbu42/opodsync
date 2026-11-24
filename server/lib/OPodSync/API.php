@@ -552,6 +552,11 @@ class API
 			$params = [$this->user->id];
 			$group = ($_GET['aggregated'] ?? '') === 'true' ? ' GROUP BY e.url' : ' GROUP BY e.id';
 
+			if (isset($_GET['episode'])) {
+				$where .= ' AND e.url = ?';
+				$params[] = $_GET['episode'];
+			}
+
 			if (isset($_GET['since'])) {
 				$where .= ' AND e.changed >= ?';
 				$params[] = (int)$_GET['since'];

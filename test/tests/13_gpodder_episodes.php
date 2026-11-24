@@ -58,3 +58,15 @@ Test::equals(10, $actions[0]->position);
 Test::equals('2009-12-13T09:00:00Z', $actions[0]->timestamp);
 
 Test::equals(3, count($episodes(['aggregated' => 'false'])));
+
+// episode: the actions of one episode, with aggregated only its latest
+Test::equals(2, count($episodes(['episode' => 'http://example.com/files/s01e20.mp3'])));
+Test::equals(0, count($episodes(['episode' => 'http://example.com/files/unknown.mp3'])));
+
+$actions = $episodes(['episode' => 'http://example.com/files/s01e20.mp3', 'aggregated' => 'true']);
+Test::equals(1, count($actions));
+Test::equals('play', $actions[0]->action);
+Test::equals(10, $actions[0]->position);
+
+$actions = $episodes(['episode' => 'http://example.com/files/s01e20.mp3', 'since' => strtotime('2009-12-12T12:00:00Z')]);
+Test::equals(1, count($actions));
